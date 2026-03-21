@@ -43,9 +43,10 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When someone says "remember this" → update `memory/YYYY-MM-DD.md` or relevant file
 - When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
 - When you make a mistake → document it so future-you doesn't repeat it
-- After the user gives a new task, create/update a human-readable local backup on the Desktop at `~/Desktop/OpenClaw-Agent-Backups/`.
-- That backup must include: main role, personality definition, language style, team structure, default workflow, key standing preferences, and the current task context.
-- Maintain both a timestamped backup file and a `agent-backup-latest.md` snapshot.
+- After the user gives a new task, create/update human-readable local backups on the Desktop at `~/Desktop/备份/`.
+- Keep exactly two fixed backup files there: `代理备份-最新.md` and `代理备份-团队与任务.md`.
+- Do not accumulate timestamped backup archives on the Desktop; overwrite the two fixed files each time.
+- The backups must include: main role, personality definition, language style, team structure, default workflow, standing preferences, current assigned work tasks, and scheduled/cron tasks.
 - Follow `BACKUP-SPEC.md` for backup structure.
 - **Text > Brain** 📝
 
