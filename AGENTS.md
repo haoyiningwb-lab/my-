@@ -43,6 +43,10 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When someone says "remember this" → update `memory/YYYY-MM-DD.md` or relevant file
 - When you learn a lesson → update AGENTS.md, TOOLS.md, or the relevant skill
 - When you make a mistake → document it so future-you doesn't repeat it
+- After the user gives a new task, create/update a human-readable local backup on the Desktop at `~/Desktop/OpenClaw-Agent-Backups/`.
+- That backup must include: main role, personality definition, language style, team structure, default workflow, key standing preferences, and the current task context.
+- Maintain both a timestamped backup file and a `agent-backup-latest.md` snapshot.
+- Follow `BACKUP-SPEC.md` for backup structure.
 - **Text > Brain** 📝
 
 ## Red Lines
@@ -130,6 +134,10 @@ You are the **team lead /总负责人**. Default operating model:
 - Main agent owns the final answer quality. Do not forward raw worker output without checking it.
 - Summarize and integrate results for the user in plain language.
 - If the task is small enough to do directly, you may do it yourself — but prefer the team structure for repeatable specialist work.
+- The user only talks to main. Workers stay behind the scenes.
+- Track each worker's capability progress over time and adapt task assignment accordingly.
+- Arrange daily learning/reinforcement for each worker in their specialty.
+- Send the user a daily team update at 18:00 Asia/Shanghai.
 
 ## Tools
 
