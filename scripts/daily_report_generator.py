@@ -138,25 +138,40 @@ def build_report(target: date = DEFAULT_TARGET) -> ReportData:
         target_row = find_row_by_date(ws, target)
         if not target_row:
             continue
+
+        prev_row = find_row_by_date(ws, target - timedelta(days=1))
         total, push, vio = value_by_kind(biz, target_row)
-        rows.append(BizRow(biz, float(total) if total is not None else None, float(push) if isinstance(push, (int, float)) else None, float(vio) if isinstance(vio, (int, float)) else None, STATUS_MAP.get(biz, "✓"), target))
+        prev_total, prev_push, prev_vio = value_by_kind(biz, prev_row) if prev_row else (None, None, None)
+
+        total_f = float(total) if total is not None else None
+        push_f = float(push) if isinstance(push, (int, float)) else None
+        vio_f = float(vio) if isinstance(vio, (int, float)) else None
+        rows.append(BizRow(biz, total_f, push_f, vio_f, STATUS_MAP.get(biz, "✓"), target))
 
         if biz == "战绩昵称":
-            red.append("战绩昵称：数据链路异常，数据量误差 16481，小模型命中 21474，仅 4993 条进入后续链路。")
+            red.append("战绩昵称：数据链路异常，需优先复核上下游流转与结果回传，避免异常继续放大。")
         elif biz == "steam昵称简介":
-            warn.append("steam昵称简介：数据量误差 382，链路存在明显卡点。")
+            warn.append("steam昵称简介：链路存在明显卡点，建议优先核查中间节点承接情况。")
         elif biz == "融媒体短文本":
-            warn.append("融媒体短文本：数据量误差 133，链路存在轻度卡点。")
+            warn.append("融媒体短文本：链路存在轻度卡点，建议继续观察并排查堵点。")
         elif biz == "TapTap-融媒体长文本":
-            warn.append("TapTap-融媒体长文本：推审率 84.2%，违规率 1.26%，审核承接压力持续走高。")
+            warn.append(f"TapTap-融媒体长文本：推审率 {pct(push_f)}，大盘违规率 {pct(vio_f)}，审核承接压力偏高。")
         elif biz == "国内小镇舆情":
-            warn.append("国内小镇舆情：推审率 9.26%，命中准确率 0，策略有效性偏弱。")
+            warn.append(f"国内小镇舆情：推审率 {pct(push_f)}，大盘违规率 {pct(vio_f)}，策略有效性需继续观察。")
         elif biz == "海外小镇舆情":
-            warn.append("海外小镇舆情：推审率 81.14%，命中准确率 0，高比例送审但无有效命中。")
+            warn.append(f"海外小镇舆情：推审率 {pct(push_f)}，大盘违规率 {pct(vio_f)}，高比例送审表现需继续核查。")
         elif biz == "增量昵称简介":
-            insight.append("增量昵称简介：昨日进审量 105593，较前一日上升 25.5%，大模型命中同步增加，需关注放量后的风险暴露。")
+            if total_f is not None and prev_total not in (None, 0):
+                growth = (total_f - float(prev_total)) / float(prev_total)
+                insight.append(f"增量昵称简介：昨日进审量 {intfmt(total_f)}，较前一日{'上升' if growth >= 0 else '下降'} {abs(growth) * 100:.1f}%，需关注量级变化后的风险暴露。")
+            elif total_f is not None:
+                insight.append(f"增量昵称简介：昨日进审量 {intfmt(total_f)}，需关注量级变化后的风险暴露。")
         elif biz == "国内小镇照片":
-            insight.append("国内小镇照片：昨日进审量 885435，较前一日上升 36.9%，人审策略召回同步放大，建议关注召回质量与承接压力。")
+            if total_f is not None and prev_total not in (None, 0):
+                growth = (total_f - float(prev_total)) / float(prev_total)
+                insight.append(f"国内小镇照片：昨日进审量 {intfmt(total_f)}，较前一日{'上升' if growth >= 0 else '下降'} {abs(growth) * 100:.1f}%，建议关注召回质量与承接压力。")
+            elif total_f is not None:
+                insight.append(f"国内小镇照片：昨日进审量 {intfmt(total_f)}，建议关注召回质量与承接压力。")
 
     return ReportData(target=target, red=red, warn=warn, insight=insight, rows=rows)
 
