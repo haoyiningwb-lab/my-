@@ -11,7 +11,7 @@ st.set_page_config(page_title="业务数据看板", page_icon="📊", layout="wi
 st.markdown(
     """
 <style>
-.block-container {padding-top: 1.9rem; padding-bottom: 2rem; max-width: 1420px;}
+.block-container {padding-top: 2.4rem; padding-bottom: 2rem; max-width: 1420px;}
 h1, h2, h3 {scroll-margin-top: 90px;}
 .main-title {font-size: 2.15rem; font-weight: 800; margin-bottom: 0.15rem; display:flex; align-items:center; gap:10px;}
 .sub-title {color: #64748b; margin-bottom: 1.15rem;}
@@ -19,10 +19,10 @@ h1, h2, h3 {scroll-margin-top: 90px;}
 .card small {opacity: .86;}
 [data-testid='stMetric'] {background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.8rem 1rem; border-radius: 16px;}
 [data-testid='stMetricValue'] {font-size: 1.55rem;}
-[data-testid='stSidebar'] {background: linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%); border-right:1px solid #e2e8f0;}
-[data-testid='stSidebar'] .block-container {padding-top: 1.1rem;}
-.sidebar-panel {background: rgba(255,255,255,.78); border:1px solid #e5e7eb; border-radius:18px; padding:14px 14px 8px 14px; box-shadow: 0 10px 28px rgba(15,23,42,.06); margin-bottom: 12px;}
-.side-kpi {background:#ffffff; border:1px solid #e5e7eb; border-radius:14px; padding:10px 12px; margin-top:10px;}
+[data-testid='stSidebar'] {background: linear-gradient(180deg,#eef2ff 0%,#f8fafc 45%,#fefefe 100%); border-right:1px solid #dbe4ff;}
+[data-testid='stSidebar'] .block-container {padding-top: 0.8rem; padding-left: 0.9rem; padding-right: 0.9rem;}
+.sidebar-panel {background: linear-gradient(180deg,rgba(255,255,255,.95) 0%,rgba(248,250,252,.98) 100%); border:1px solid #dbe4ff; border-radius:20px; padding:15px 14px 10px 14px; box-shadow: 0 10px 28px rgba(59,130,246,.08); margin-bottom: 12px;}
+.side-kpi {background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); border:1px solid #dbe4ff; border-radius:14px; padding:10px 12px; margin-top:10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.9);}
 .small-muted {font-size:12px; color:#64748b;}
 </style>
 """,
@@ -51,13 +51,28 @@ def zh_date(v):
     return f"{dt.year}年{dt.month}月{dt.day}日"
 
 
+def short_zh_date(v):
+    dt = pd.to_datetime(v)
+    return f"{dt.month}月{dt.day}日"
+
+
 def format_axis_date(series: pd.Series) -> list[str]:
-    return [zh_date(x) for x in series]
+    return [short_zh_date(x) for x in series]
 
 
-def add_line_labels(fig, y_col: str, text_col: str):
-    fig.update_traces(text=text_col, textposition="top center", cliponaxis=False)
+def add_line_labels(fig, text_col: str):
+    fig.update_traces(text=text_col, textposition="top center", cliponaxis=False, textfont=dict(size=10))
     return fig
+
+
+def compact_num_label(v):
+    if pd.isna(v):
+        return "-"
+    if v >= 100000000:
+        return f"{v/100000000:.2f}亿"
+    if v >= 10000:
+        return f"{v/10000:.1f}万"
+    return f"{int(v)}"
 
 
 df = get_df()
@@ -76,29 +91,32 @@ all_biz = sorted(df["biz_name"].dropna().unique().tolist())
 with st.sidebar:
     st.markdown('<div class="sidebar-panel">', unsafe_allow_html=True)
     st.markdown("### 筛选中心")
-    st.caption("可以快速切换业务分组、业务范围、观察窗口，并一键恢复默认。")
+    st.caption("支持按分组、业务、状态和时间快速切换，后续我还能继续加快捷筛选。")
 
-    default_all_groups = st.checkbox("业务分组全选", value=True)
-    selected_groups = st.multiselect("业务分组", all_groups, default=all_groups if default_all_groups else all_groups[:2])
+    default_all_groups = st.checkbox("全部业务分组", value=True)
+    selected_groups = st.multiselect("选择业务分组", all_groups, default=all_groups if default_all_groups else all_groups[:2], placeholder="选择业务分组")
     if not selected_groups:
         selected_groups = all_groups
 
     base = df[df["biz_group"].isin(selected_groups)]
     biz_names = sorted(base["biz_name"].dropna().unique().tolist())
-    default_all_biz = st.checkbox("业务全选", value=True)
-    selected_biz = st.multiselect("业务", biz_names, default=biz_names if default_all_biz else biz_names[: min(5, len(biz_names))])
+    default_all_biz = st.checkbox("全部业务", value=True)
+    selected_biz = st.multiselect("选择业务", biz_names, default=biz_names if default_all_biz else biz_names[: min(5, len(biz_names))], placeholder="选择业务")
     if not selected_biz:
         selected_biz = biz_names
 
-    days = st.selectbox("观察窗口", [7, 15, 30, 60], index=2)
-    status_filter = st.multiselect("状态筛选", ["🔴", "⚠️", "⚡", "✓"], default=["🔴", "⚠️", "⚡", "✓"])
-    only_abnormal = st.toggle("仅看异常业务", value=False)
+    days = st.select_slider("观察窗口", options=[7, 15, 30, 60], value=30)
+    status_filter = st.segmented_control("状态筛选", options=["全部", "异常", "正常"], default="全部", selection_mode="single")
+    only_abnormal = st.toggle("仅保留异常业务", value=False)
     st.markdown('</div>', unsafe_allow_html=True)
 
 filtered = df[df["biz_group"].isin(selected_groups) & df["biz_name"].isin(selected_biz)].copy()
 filtered = filtered[filtered["date"] >= (pd.Timestamp(global_latest) - pd.Timedelta(days=days - 1))]
 snap_filtered = snapshot[snapshot["biz_group"].isin(selected_groups) & snapshot["biz_name"].isin(selected_biz)].copy()
-snap_filtered = snap_filtered[snap_filtered["status"].isin(status_filter)]
+if status_filter == "异常":
+    snap_filtered = snap_filtered[snap_filtered["status"].isin(["🔴", "⚠️", "⚡"])]
+elif status_filter == "正常":
+    snap_filtered = snap_filtered[snap_filtered["status"] == "✓"]
 if only_abnormal:
     snap_filtered = snap_filtered[snap_filtered["status"].isin(["🔴", "⚠️", "⚡"])]
     filtered = filtered[filtered["biz_name"].isin(snap_filtered["biz_name"])]
@@ -141,10 +159,10 @@ with trend_tab:
     with c1:
         trend_df = filtered.groupby("date", as_index=False).agg(total_count=("total_count", "sum"))
         trend_df["date_label"] = format_axis_date(trend_df["date"])
-        trend_df["label"] = trend_df["total_count"].map(lambda x: f"{x/10000:.1f}万" if x >= 10000 else f"{int(x)}")
+        trend_df["label"] = trend_df["total_count"].map(compact_num_label)
         fig = px.line(trend_df, x="date_label", y="total_count", markers=True, text="label", title="总进审量趋势", template="plotly_white")
-        fig.update_layout(height=360, margin=dict(l=20, r=20, t=70, b=20), yaxis_title="进审量", xaxis_title=None, title=dict(y=0.96), xaxis=dict(tickangle=0))
-        fig = add_line_labels(fig, "total_count", "label")
+        fig.update_layout(height=390, margin=dict(l=20, r=20, t=90, b=40), yaxis_title="进审量", xaxis_title=None, title=dict(y=0.98), xaxis=dict(tickangle=0, tickmode='array', tickvals=trend_df['date_label'], automargin=True))
+        fig = add_line_labels(fig, "label")
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         status_df = snap_filtered.groupby("status", as_index=False).size().sort_values("status")
@@ -158,16 +176,16 @@ with trend_tab:
         push_df["date_label"] = format_axis_date(push_df["date"])
         push_df["label"] = push_df["push_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
         fig = px.area(push_df, x="date_label", y="push_rate", text="label", title="平均推审率趋势", template="plotly_white")
-        fig.update_layout(height=340, margin=dict(l=20, r=20, t=70, b=20), yaxis_tickformat='.1%', xaxis_title=None, title=dict(y=0.96))
-        fig.update_traces(textposition="top center", cliponaxis=False)
+        fig.update_layout(height=360, margin=dict(l=20, r=20, t=90, b=40), yaxis_tickformat='.1%', xaxis_title=None, title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=push_df['date_label'], automargin=True))
+        fig.update_traces(textposition="top center", cliponaxis=False, textfont=dict(size=10))
         st.plotly_chart(fig, use_container_width=True)
     with c4:
         vio_df = filtered.groupby("date", as_index=False).agg(violation_rate=("violation_rate", "mean"))
         vio_df["date_label"] = format_axis_date(vio_df["date"])
         vio_df["label"] = vio_df["violation_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
         fig = px.area(vio_df, x="date_label", y="violation_rate", text="label", title="平均违规率趋势", template="plotly_white")
-        fig.update_layout(height=340, margin=dict(l=20, r=20, t=70, b=20), yaxis_tickformat='.2%', xaxis_title=None, title=dict(y=0.96))
-        fig.update_traces(textposition="top center", cliponaxis=False)
+        fig.update_layout(height=360, margin=dict(l=20, r=20, t=90, b=40), yaxis_tickformat='.2%', xaxis_title=None, title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=vio_df['date_label'], automargin=True))
+        fig.update_traces(textposition="top center", cliponaxis=False, textfont=dict(size=10))
         st.plotly_chart(fig, use_container_width=True)
 
 with biz_tab:
@@ -186,17 +204,26 @@ with biz_tab:
             top4.metric("数据日期", zh_date(latest_row["date"]))
 
             focus_df["date_label"] = format_axis_date(focus_df["date"])
-            focus_df["count_label"] = focus_df["total_count"].map(num_text)
+            focus_df["count_label"] = focus_df["total_count"].map(compact_num_label)
+            focus_df["avg_label"] = focus_df["total_7d_avg"].map(compact_num_label)
             fig = px.line(focus_df, x="date_label", y=["total_count", "total_7d_avg"], markers=True, title=f"{focus_biz} · 进审量 vs 7日均量", template="plotly_white")
-            fig.update_layout(height=360, margin=dict(l=20, r=20, t=70, b=20), legend_title="指标", xaxis_title=None, title=dict(y=0.96))
-            fig.update_traces(cliponaxis=False)
+            fig.update_layout(height=390, margin=dict(l=20, r=20, t=90, b=40), legend_title="指标", xaxis_title=None, yaxis_title="进审量", title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig.data[0].name = "进审量"
+            fig.data[1].name = "7日均量"
+            fig.data[0].text = focus_df["count_label"]
+            fig.data[1].text = focus_df["avg_label"]
+            fig.update_traces(textposition="top center", cliponaxis=False, textfont=dict(size=10))
             st.plotly_chart(fig, use_container_width=True)
 
             focus_df["push_label"] = focus_df["push_rate"].map(pct_text)
             focus_df["vio_label"] = focus_df["violation_rate"].map(pct_text)
             fig2 = px.line(focus_df, x="date_label", y=["push_rate", "violation_rate"], markers=True, title=f"{focus_biz} · 推审率 / 违规率趋势", template="plotly_white")
-            fig2.update_layout(height=360, margin=dict(l=20, r=20, t=70, b=20), yaxis_tickformat='.2%', xaxis_title=None, title=dict(y=0.96))
-            fig2.update_traces(cliponaxis=False)
+            fig2.update_layout(height=390, margin=dict(l=20, r=20, t=90, b=40), yaxis_tickformat='.2%', xaxis_title=None, yaxis_title="比率", title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig2.data[0].name = "推审率"
+            fig2.data[1].name = "违规率"
+            fig2.data[0].text = focus_df["push_label"]
+            fig2.data[1].text = focus_df["vio_label"]
+            fig2.update_traces(textposition="top center", cliponaxis=False, textfont=dict(size=10))
             st.plotly_chart(fig2, use_container_width=True)
 
             show_cols = focus_df[["date", "total_count", "total_7d_avg", "push_rate", "violation_rate", "review_count", "reject_count", "error_value", "source_file"]].copy()
