@@ -26,6 +26,9 @@ st.markdown(
 .sidebar-panel {background: linear-gradient(180deg,rgba(255,255,255,.95) 0%,rgba(248,250,252,.98) 100%); border:1px solid #dbe4ff; border-radius:20px; padding:15px 14px 10px 14px; box-shadow: 0 10px 28px rgba(59,130,246,.08); margin-bottom: 12px;}
 .side-kpi {background:linear-gradient(180deg,#ffffff 0%,#f8fbff 100%); border:1px solid #dbe4ff; border-radius:14px; padding:10px 12px; margin-top:10px;}
 .small-muted {font-size:12px; color:#64748b;}
+[data-baseweb="tag"] {background:#eaf2ff !important; border-radius:10px !important; border:1px solid #bfd3ff !important;}
+[data-baseweb="tag"] span {color:#3157b7 !important; font-weight:600 !important;}
+[data-baseweb="tag"] svg {color:#6b88d6 !important;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -90,6 +93,47 @@ def style_single_series_line(fig, date_vals, yaxis_title=None, percent_axis=Fals
     if percent_axis:
         fig.update_layout(yaxis_tickformat='.2%')
     return fig
+
+
+def build_warning_texts(df: pd.DataFrame) -> list[str]:
+    warnings = []
+    def row_of(name: str):
+        x = df[df['biz_name'] == name]
+        return x.iloc[0] if not x.empty else None
+
+    for name in ["steam昵称简介", "融媒体短文本", "TapTap-融媒体长文本", "国内小镇舆情", "海外小镇舆情"]:
+        row = row_of(name)
+        if row is None:
+            continue
+        push = pct_text(row.get('push_rate'))
+        vio = pct_text(row.get('violation_rate'))
+        if name == "steam昵称简介":
+            warnings.append(f"{name}：当前推审率 {push}，违规率 {vio}，建议优先核查链路承接情况。")
+        elif name == "融媒体短文本":
+            warnings.append(f"{name}：当前推审率 {push}，违规率 {vio}，建议继续观察并排查轻度卡点。")
+        elif name == "TapTap-融媒体长文本":
+            warnings.append(f"{name}：当前推审率 {push}，违规率 {vio}，审核承接压力偏高。")
+        elif name == "国内小镇舆情":
+            warnings.append(f"{name}：当前推审率 {push}，违规率 {vio}，策略有效性需继续观察。")
+        elif name == "海外小镇舆情":
+            warnings.append(f"{name}：当前推审率 {push}，违规率 {vio}，高比例送审表现需继续核查。")
+    stale = df[df['freshness_days'] > 0]
+    if not stale.empty:
+        warnings.insert(0, f"共有 {len(stale)} 个业务数据未更新到最新日期，需优先检查同步链路。")
+    return warnings
+
+
+def render_group_trend(source_df: pd.DataFrame, biz_names: list[str], title: str, key: str):
+    part = source_df[source_df['biz_name'].isin(biz_names)].copy()
+    if part.empty:
+        st.info(f"{title}暂无数据")
+        return
+    d = part.groupby('date', as_index=False).agg(total_count=('total_count', 'sum'))
+    d['date_label'] = format_axis_date(d['date'])
+    d['label'] = d['total_count'].map(compact_num_label)
+    fig = px.line(d, x='date_label', y='total_count', markers=True, text='label', title=title, template='plotly_white')
+    fig = style_single_series_line(fig, d['date_label'], yaxis_title='进审量', percent_axis=False)
+    st.plotly_chart(fig, use_container_width=True, key=key)
 
 
 latest = load_csv("biz_summary_latest.csv")
@@ -203,6 +247,15 @@ with trend_tab:
         fig = style_single_series_line(fig, vio_df["date_label"], yaxis_title="违规率", percent_axis=True)
         st.plotly_chart(fig, use_container_width=True)
 
+    st.subheader("分组趋势看板")
+    g1, g2, g3 = st.columns(3)
+    with g1:
+        render_group_trend(trend_f, ["增量昵称简介", "TapTap-头像-用户资料图片", "融媒体短文本", "TapTap-融媒体长文本"], "社区业务趋势", "community_trend")
+    with g2:
+        render_group_trend(trend_f, ["国内小镇书籍", "国内小镇照片", "国内小镇舆情", "海外小镇书籍", "海外小镇照片", "海外小镇舆情"], "小镇业务趋势", "town_trend")
+    with g3:
+        render_group_trend(trend_f, ["steam成就标题简介", "steam昵称简介", "steam头像封面", "战绩昵称", "战绩头像"], "其他业务趋势", "other_trend")
+
 with biz_tab:
     focus_candidates = sorted(latest_f["biz_name"].unique().tolist()) if not latest_f.empty else []
     if not focus_candidates:
@@ -269,6 +322,14 @@ with alert_tab:
         alerts_f["数据新鲜度"] = alerts_f["freshness_label"]
         st.subheader("优先排查列表")
         st.dataframe(alerts_f[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差", "source_file"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
+
+    st.subheader("风险预警")
+    warnings = build_warning_texts(latest_f)
+    if warnings:
+        for w in warnings:
+            st.markdown(f"- {w}")
+    else:
+        st.caption("当前暂无额外风险预警文字。")
 
     st.subheader("最新业务明细")
     latest_show = latest_f.copy()
