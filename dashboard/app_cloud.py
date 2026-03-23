@@ -160,8 +160,7 @@ latest = load_csv("biz_summary_latest.csv")
 trend = load_csv("biz_trend_30d.csv")
 alerts = load_csv("fact_alerts.csv")
 
-st.markdown('<div class="main-title">📊 业务监控可视化看板（线上版）</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">读取仓库内导出的标准化数据文件，适合多人访问统一查看。</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">📊 业务数据看板</div>', unsafe_allow_html=True)
 
 if latest.empty:
     st.error("未读取到导出数据，请先同步 exports 目录到线上仓库。")
