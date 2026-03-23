@@ -56,6 +56,12 @@ python3 export_sqlite.py
 导出后会生成：
 - `exports/dashboard.sqlite`
 
+## 线上部署成品
+- `app_cloud.py`：线上展示版入口（读取仓库内 exports 数据）
+- `sync_to_repo.sh`：导出并推送最新数据到远程仓库
+- `DEPLOY-ONLINE.md`：10点自动同步 + Streamlit Cloud 部署说明
+- `launchd/com.haoyining.dashboard-sync.plist`：macOS 每天 10:00 自动同步模板
+
 ## 文档
 - `BI-DATA-MODEL.md`：通用数据模型说明
 - `BI-TOOLS-SUGGESTION.md`：工具选择建议
@@ -67,4 +73,4 @@ python3 export_sqlite.py
 - 增加规则配置页
 - 增加日报回溯页
 - 增加更精致的主题样式和品牌化配色
-- 如果需要，我可以继续补 PostgreSQL 导出和一键启动脚本
+- 如果需要，我可以继续补 PostgreSQL 导出和 GitHub Actions 版本同步
