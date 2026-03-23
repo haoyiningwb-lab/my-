@@ -14,7 +14,7 @@ try:
 except:
     # 这里保留你提供的真实 ID 供本地测试，部署时请务必通过 Streamlit 后台设置
     APP_ID = "cli_a9e59cab76381bb5"
-    APP_SECRET = "Q9qlFjw4QAQjtqHjW7f1Gb0Eyirl1bsP"
+    APP_SECRET = ""
 
 SPREADSHEET_TOKEN = "WLx3svmwbhycaNtk5iicasXXnwU"
 
