@@ -31,6 +31,8 @@ st.markdown(
 [data-baseweb="tag"] svg {color:#6b88d6 !important; width:14px !important; height:14px !important;}
 [data-baseweb="select"] > div {min-height:38px !important;}
 [data-baseweb="input"] > div {min-height:38px !important;}
+.stMultiSelect [data-baseweb="tag"] {max-width: 84px !important; overflow: hidden !important;}
+.stMultiSelect [data-baseweb="select"] > div {max-height: 40px !important; overflow: hidden !important;}
 </style>
 """,
     unsafe_allow_html=True,
@@ -216,132 +218,138 @@ k2.metric("平均推审率", pct_text(latest_f['push_rate'].mean()))
 k3.metric("平均违规率", pct_text(latest_f['violation_rate'].mean()))
 k4.metric("红色业务", str(int((latest_f['status'] == '🔴').sum())))
 
-st.subheader("总览趋势")
-c1, c2 = st.columns([1.7, 1.1])
-with c1:
-    trend_df = trend_f.groupby("date", as_index=False).agg(total_count=("total_count", "sum"))
-    trend_df["date_label"] = format_axis_date(trend_df["date"])
-    trend_df["label"] = trend_df["total_count"].map(compact_num_label)
-    fig = px.line(trend_df, x="date_label", y="total_count", markers=True, text="label", title="总进审量趋势", template="plotly_white")
-    fig = style_single_series_line(fig, trend_df["date_label"], yaxis_title="进审量", percent_axis=False)
-    st.plotly_chart(fig, use_container_width=True)
-with c2:
-    status_df = latest_f.groupby("status", as_index=False).size().sort_values("status")
-    fig = px.bar(status_df, x="status", y="size", color="status", text="size", title="最新状态分布", template="plotly_white")
-    fig.update_layout(height=350, margin=dict(l=20, r=20, t=72, b=36), showlegend=False, xaxis_title="状态", yaxis_title="业务数", title=dict(y=0.95))
-    st.plotly_chart(fig, use_container_width=True)
+page = st.radio("页面切换", ["总览趋势", "分组趋势", "业务钻取", "异常排查"], horizontal=True)
 
-c3, c4 = st.columns(2)
-with c3:
-    push_df = trend_f.groupby("date", as_index=False).agg(push_rate=("push_rate", "mean"))
-    push_df["date_label"] = format_axis_date(push_df["date"])
-    push_df["label"] = push_df["push_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
-    fig = px.line(push_df, x="date_label", y="push_rate", markers=True, text="label", title="平均推审率趋势", template="plotly_white")
-    fig = style_single_series_line(fig, push_df["date_label"], yaxis_title="推审率", percent_axis=True)
-    st.plotly_chart(fig, use_container_width=True)
-with c4:
-    vio_df = trend_f.groupby("date", as_index=False).agg(violation_rate=("violation_rate", "mean"))
-    vio_df["date_label"] = format_axis_date(vio_df["date"])
-    vio_df["label"] = vio_df["violation_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
-    fig = px.line(vio_df, x="date_label", y="violation_rate", markers=True, text="label", title="平均违规率趋势", template="plotly_white")
-    fig = style_single_series_line(fig, vio_df["date_label"], yaxis_title="违规率", percent_axis=True)
-    st.plotly_chart(fig, use_container_width=True)
-
-st.subheader("分组趋势")
 group_options = {
     "社区业务": ["增量昵称简介", "TapTap-头像-用户资料图片", "融媒体短文本", "TapTap-融媒体长文本"],
     "小镇业务": ["国内小镇书籍", "国内小镇照片", "国内小镇舆情", "海外小镇书籍", "海外小镇照片", "海外小镇舆情"],
     "其他业务": ["steam成就标题简介", "steam昵称简介", "steam头像封面", "战绩昵称", "战绩头像"],
 }
-selected_group_trend = st.selectbox("选择分组板块", list(group_options.keys()), index=0)
-render_group_trend(trend_f, group_options[selected_group_trend], f"{selected_group_trend}趋势", "selected_group_trend")
 
-st.subheader("业务钻取")
-focus_candidates = sorted(latest_f["biz_name"].unique().tolist()) if not latest_f.empty else []
-if not focus_candidates:
-    st.warning("当前筛选条件下暂无业务数据。")
-else:
-    focus_biz = st.selectbox("选择业务", focus_candidates)
-    focus_df = trend_f[trend_f["biz_name"] == focus_biz].copy().sort_values("date")
-    top1, top2, top3, top4 = st.columns(4)
-    if not focus_df.empty:
-        latest_row = latest_f[latest_f["biz_name"] == focus_biz].iloc[-1]
-        top1.metric("最新进审量", num_text(latest_row["total_count"]))
-        top2.metric("最新推审率", pct_text(latest_row["push_rate"]))
-        top3.metric("最新违规率", pct_text(latest_row["violation_rate"]))
-        top4.metric("数据日期", zh_date(latest_row["date"]))
-
-        focus_df["date_label"] = format_axis_date(focus_df["date"])
-        focus_df["count_label"] = focus_df["total_count"].map(compact_num_label)
-        focus_df["avg_label"] = focus_df["total_7d_avg"].map(compact_num_label)
-        fig = px.line(focus_df, x="date_label", y=["total_count", "total_7d_avg"], markers=True, title=f"{focus_biz} · 进审量 vs 7日均量", template="plotly_white")
-        fig.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), legend_title="指标", xaxis_title=None, yaxis_title="进审量", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
-        fig.data[0].name = "进审量"
-        fig.data[1].name = "7日均量"
-        fig.data[0].text = focus_df["count_label"]
-        fig.data[1].text = focus_df["avg_label"]
-        fig.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
-        fig.data[1].update(line=dict(width=2.2, color="#F59E0B", dash="dot"), marker=dict(size=6, color="#F59E0B"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+if page == "总览趋势":
+    st.subheader("总览趋势")
+    c1, c2 = st.columns([1.7, 1.1])
+    with c1:
+        trend_df = trend_f.groupby("date", as_index=False).agg(total_count=("total_count", "sum"))
+        trend_df["date_label"] = format_axis_date(trend_df["date"])
+        trend_df["label"] = trend_df["total_count"].map(compact_num_label)
+        fig = px.line(trend_df, x="date_label", y="total_count", markers=True, text="label", title="总进审量趋势", template="plotly_white")
+        fig = style_single_series_line(fig, trend_df["date_label"], yaxis_title="进审量", percent_axis=False)
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        status_df = latest_f.groupby("status", as_index=False).size().sort_values("status")
+        fig = px.bar(status_df, x="status", y="size", color="status", text="size", title="最新状态分布", template="plotly_white")
+        fig.update_layout(height=350, margin=dict(l=20, r=20, t=72, b=36), showlegend=False, xaxis_title="状态", yaxis_title="业务数", title=dict(y=0.95))
         st.plotly_chart(fig, use_container_width=True)
 
-        focus_df["push_label"] = focus_df["push_rate"].map(pct_text)
-        focus_df["vio_label"] = focus_df["violation_rate"].map(pct_text)
-        fig2 = px.line(focus_df, x="date_label", y=["push_rate", "violation_rate"], markers=True, title=f"{focus_biz} · 推审率 / 违规率趋势", template="plotly_white")
-        fig2.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), yaxis_tickformat='.2%', xaxis_title=None, yaxis_title="比率", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
-        fig2.data[0].name = "推审率"
-        fig2.data[1].name = "违规率"
-        fig2.data[0].text = focus_df["push_label"]
-        fig2.data[1].text = focus_df["vio_label"]
-        fig2.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
-        fig2.data[1].update(line=dict(width=2.2, color="#EF4444"), marker=dict(size=6, color="#EF4444"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
-        st.plotly_chart(fig2, use_container_width=True)
+    c3, c4 = st.columns(2)
+    with c3:
+        push_df = trend_f.groupby("date", as_index=False).agg(push_rate=("push_rate", "mean"))
+        push_df["date_label"] = format_axis_date(push_df["date"])
+        push_df["label"] = push_df["push_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
+        fig = px.line(push_df, x="date_label", y="push_rate", markers=True, text="label", title="平均推审率趋势", template="plotly_white")
+        fig = style_single_series_line(fig, push_df["date_label"], yaxis_title="推审率", percent_axis=True)
+        st.plotly_chart(fig, use_container_width=True)
+    with c4:
+        vio_df = trend_f.groupby("date", as_index=False).agg(violation_rate=("violation_rate", "mean"))
+        vio_df["date_label"] = format_axis_date(vio_df["date"])
+        vio_df["label"] = vio_df["violation_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
+        fig = px.line(vio_df, x="date_label", y="violation_rate", markers=True, text="label", title="平均违规率趋势", template="plotly_white")
+        fig = style_single_series_line(fig, vio_df["date_label"], yaxis_title="违规率", percent_axis=True)
+        st.plotly_chart(fig, use_container_width=True)
 
-        show_cols = focus_df[["date", "total_count", "total_7d_avg", "push_rate", "violation_rate", "review_count", "reject_count", "error_value", "source_file"]].copy()
-        show_cols["date"] = show_cols["date"].map(zh_date)
-        show_cols["total_count"] = show_cols["total_count"].map(num_text)
-        show_cols["total_7d_avg"] = show_cols["total_7d_avg"].map(num_text)
-        show_cols["push_rate"] = show_cols["push_rate"].map(pct_text)
-        show_cols["violation_rate"] = show_cols["violation_rate"].map(pct_text)
-        show_cols["review_count"] = show_cols["review_count"].map(num_text)
-        show_cols["reject_count"] = show_cols["reject_count"].map(num_text)
-        show_cols["error_value"] = show_cols["error_value"].map(num_text)
-        st.dataframe(show_cols.rename(columns={"date": "日期", "total_count": "进审量", "total_7d_avg": "7日均量", "push_rate": "推审率", "violation_rate": "违规率", "review_count": "人审量", "reject_count": "驳回量", "error_value": "误差值", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
+elif page == "分组趋势":
+    st.subheader("分组趋势")
+    selected_group_trend = st.selectbox("选择分组板块", list(group_options.keys()), index=0)
+    render_group_trend(trend_f, group_options[selected_group_trend], f"{selected_group_trend}趋势", "selected_group_trend")
 
-st.subheader("异常排查")
-alerts_f = alerts[alerts["biz_group"].isin(selected_groups) & alerts["biz_name"].isin(selected_biz)].copy() if not alerts.empty else pd.DataFrame()
-
-st.markdown("#### 风险预警")
-warnings = build_warning_texts(latest_f)
-if warnings:
-    for w in warnings:
-        st.markdown(f"- {w}")
-else:
-    st.caption("当前暂无额外风险预警文字。")
-
-if not alerts_f.empty:
-    alerts_f["进审量"] = alerts_f["total_count"].map(num_text)
-    alerts_f["推审率"] = alerts_f["push_rate"].map(pct_text)
-    alerts_f["违规率"] = alerts_f["violation_rate"].map(pct_text)
-    if "total_vs_7d_pct_point" in alerts_f.columns:
-        alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct_point"].map(signed_pct)
-    elif "total_vs_7d_pct" in alerts_f.columns:
-        alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct"].map(lambda x: "-" if pd.isna(x) else f"{float(x) * 100:+.1f}%")
+elif page == "业务钻取":
+    st.subheader("业务钻取")
+    focus_candidates = sorted(latest_f["biz_name"].unique().tolist()) if not latest_f.empty else []
+    if not focus_candidates:
+        st.warning("当前筛选条件下暂无业务数据。")
     else:
-        alerts_f["量级偏差"] = "-"
-    alerts_f["数据新鲜度"] = alerts_f["freshness_label"]
-    st.markdown("#### 优先排查列表")
-    st.dataframe(alerts_f[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差", "source_file"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
+        focus_biz = st.selectbox("选择业务", focus_candidates)
+        focus_df = trend_f[trend_f["biz_name"] == focus_biz].copy().sort_values("date")
+        top1, top2, top3, top4 = st.columns(4)
+        if not focus_df.empty:
+            latest_row = latest_f[latest_f["biz_name"] == focus_biz].iloc[-1]
+            top1.metric("最新进审量", num_text(latest_row["total_count"]))
+            top2.metric("最新推审率", pct_text(latest_row["push_rate"]))
+            top3.metric("最新违规率", pct_text(latest_row["violation_rate"]))
+            top4.metric("数据日期", zh_date(latest_row["date"]))
 
-st.markdown("#### 最新业务明细")
-latest_show = latest_f.copy()
-latest_show["进审量"] = latest_show["total_count"].map(num_text)
-latest_show["推审率"] = latest_show["push_rate"].map(pct_text)
-latest_show["违规率"] = latest_show["violation_rate"].map(pct_text)
-if "total_vs_7d_pct_point" in latest_show.columns:
-    latest_show["量级偏差"] = latest_show["total_vs_7d_pct_point"].map(signed_pct)
-elif "total_vs_7d_pct" in latest_show.columns:
-    latest_show["量级偏差"] = latest_show["total_vs_7d_pct"].map(lambda x: "-" if pd.isna(x) else f"{float(x) * 100:+.1f}%")
+            focus_df["date_label"] = format_axis_date(focus_df["date"])
+            focus_df["count_label"] = focus_df["total_count"].map(compact_num_label)
+            focus_df["avg_label"] = focus_df["total_7d_avg"].map(compact_num_label)
+            fig = px.line(focus_df, x="date_label", y=["total_count", "total_7d_avg"], markers=True, title=f"{focus_biz} · 进审量 vs 7日均量", template="plotly_white")
+            fig.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), legend_title="指标", xaxis_title=None, yaxis_title="进审量", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig.data[0].name = "进审量"
+            fig.data[1].name = "7日均量"
+            fig.data[0].text = focus_df["count_label"]
+            fig.data[1].text = focus_df["avg_label"]
+            fig.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            fig.data[1].update(line=dict(width=2.2, color="#F59E0B", dash="dot"), marker=dict(size=6, color="#F59E0B"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            st.plotly_chart(fig, use_container_width=True)
+
+            focus_df["push_label"] = focus_df["push_rate"].map(pct_text)
+            focus_df["vio_label"] = focus_df["violation_rate"].map(pct_text)
+            fig2 = px.line(focus_df, x="date_label", y=["push_rate", "violation_rate"], markers=True, title=f"{focus_biz} · 推审率 / 违规率趋势", template="plotly_white")
+            fig2.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), yaxis_tickformat='.2%', xaxis_title=None, yaxis_title="比率", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig2.data[0].name = "推审率"
+            fig2.data[1].name = "违规率"
+            fig2.data[0].text = focus_df["push_label"]
+            fig2.data[1].text = focus_df["vio_label"]
+            fig2.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            fig2.data[1].update(line=dict(width=2.2, color="#EF4444"), marker=dict(size=6, color="#EF4444"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            st.plotly_chart(fig2, use_container_width=True)
+
+            show_cols = focus_df[["date", "total_count", "total_7d_avg", "push_rate", "violation_rate", "review_count", "reject_count", "error_value", "source_file"]].copy()
+            show_cols["date"] = show_cols["date"].map(zh_date)
+            show_cols["total_count"] = show_cols["total_count"].map(num_text)
+            show_cols["total_7d_avg"] = show_cols["total_7d_avg"].map(num_text)
+            show_cols["push_rate"] = show_cols["push_rate"].map(pct_text)
+            show_cols["violation_rate"] = show_cols["violation_rate"].map(pct_text)
+            show_cols["review_count"] = show_cols["review_count"].map(num_text)
+            show_cols["reject_count"] = show_cols["reject_count"].map(num_text)
+            show_cols["error_value"] = show_cols["error_value"].map(num_text)
+            st.dataframe(show_cols.rename(columns={"date": "日期", "total_count": "进审量", "total_7d_avg": "7日均量", "push_rate": "推审率", "violation_rate": "违规率", "review_count": "人审量", "reject_count": "驳回量", "error_value": "误差值", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
+
 else:
-    latest_show["量级偏差"] = "-"
-latest_show["数据新鲜度"] = latest_show["freshness_label"]
-st.dataframe(latest_show[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态"}), use_container_width=True, hide_index=True)
+    st.subheader("异常排查")
+    alerts_f = alerts[alerts["biz_group"].isin(selected_groups) & alerts["biz_name"].isin(selected_biz)].copy() if not alerts.empty else pd.DataFrame()
+    st.markdown("#### 风险预警")
+    warnings = build_warning_texts(latest_f)
+    if warnings:
+        for w in warnings:
+            st.markdown(f"- {w}")
+    else:
+        st.caption("当前暂无额外风险预警文字。")
+
+    if not alerts_f.empty:
+        alerts_f["进审量"] = alerts_f["total_count"].map(num_text)
+        alerts_f["推审率"] = alerts_f["push_rate"].map(pct_text)
+        alerts_f["违规率"] = alerts_f["violation_rate"].map(pct_text)
+        if "total_vs_7d_pct_point" in alerts_f.columns:
+            alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct_point"].map(signed_pct)
+        elif "total_vs_7d_pct" in alerts_f.columns:
+            alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct"].map(lambda x: "-" if pd.isna(x) else f"{float(x) * 100:+.1f}%")
+        else:
+            alerts_f["量级偏差"] = "-"
+        alerts_f["数据新鲜度"] = alerts_f["freshness_label"]
+        st.markdown("#### 优先排查列表")
+        st.dataframe(alerts_f[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差", "source_file"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
+
+    st.markdown("#### 最新业务明细")
+    latest_show = latest_f.copy()
+    latest_show["进审量"] = latest_show["total_count"].map(num_text)
+    latest_show["推审率"] = latest_show["push_rate"].map(pct_text)
+    latest_show["违规率"] = latest_show["violation_rate"].map(pct_text)
+    if "total_vs_7d_pct_point" in latest_show.columns:
+        latest_show["量级偏差"] = latest_show["total_vs_7d_pct_point"].map(signed_pct)
+    elif "total_vs_7d_pct" in latest_show.columns:
+        latest_show["量级偏差"] = latest_show["total_vs_7d_pct"].map(lambda x: "-" if pd.isna(x) else f"{float(x) * 100:+.1f}%")
+    else:
+        latest_show["量级偏差"] = "-"
+    latest_show["数据新鲜度"] = latest_show["freshness_label"]
+    st.dataframe(latest_show[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态"}), use_container_width=True, hide_index=True)
