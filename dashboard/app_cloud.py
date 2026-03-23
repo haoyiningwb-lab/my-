@@ -258,7 +258,12 @@ with alert_tab:
         alerts_f["进审量"] = alerts_f["total_count"].map(num_text)
         alerts_f["推审率"] = alerts_f["push_rate"].map(pct_text)
         alerts_f["违规率"] = alerts_f["violation_rate"].map(pct_text)
-        alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct_point"].map(signed_pct)
+        if "total_vs_7d_pct_point" in alerts_f.columns:
+            alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct_point"].map(signed_pct)
+        elif "total_vs_7d_pct" in alerts_f.columns:
+            alerts_f["量级偏差"] = alerts_f["total_vs_7d_pct"].map(lambda x: "-" if pd.isna(x) else f"{float(x) * 100:+.1f}%")
+        else:
+            alerts_f["量级偏差"] = "-"
         alerts_f["数据新鲜度"] = alerts_f["freshness_label"]
         st.subheader("优先排查列表")
         st.dataframe(alerts_f[["biz_name", "biz_group", "status", "数据新鲜度", "进审量", "推审率", "违规率", "量级偏差", "source_file"]].rename(columns={"biz_name": "业务", "biz_group": "分组", "status": "状态", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
