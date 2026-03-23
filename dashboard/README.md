@@ -47,13 +47,24 @@ python3 export_duckdb.py
 导出后会生成：
 - `exports/dashboard.duckdb`
 
+## SQLite 导出
+```bash
+cd /Users/haoyining/.openclaw/workspace/dashboard
+python3 export_sqlite.py
+```
+
+导出后会生成：
+- `exports/dashboard.sqlite`
+
 ## 文档
 - `BI-DATA-MODEL.md`：通用数据模型说明
 - `BI-TOOLS-SUGGESTION.md`：工具选择建议
 - `METABASE-SETUP.md`：Metabase 接入建议
+- `METABASE-DASHBOARD-TEMPLATE.md`：Metabase 仪表盘搭建模板
+- `metabase_sql/`：Metabase 可直接参考的查询 SQL
 
 ## 下一步建议
 - 增加规则配置页
 - 增加日报回溯页
 - 增加更精致的主题样式和品牌化配色
-- 如果需要，我可以继续补 PostgreSQL / SQLite 版本导出
+- 如果需要，我可以继续补 PostgreSQL 导出和一键启动脚本
