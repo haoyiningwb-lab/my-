@@ -139,6 +139,22 @@ def render_group_trend(source_df: pd.DataFrame, biz_names: list[str], title: str
     fig = style_single_series_line(fig, d['date_label'], yaxis_title='进审量', percent_axis=False)
     st.plotly_chart(fig, use_container_width=True, key=key)
 
+    c1, c2 = st.columns(2)
+    with c1:
+        push = part.groupby('date', as_index=False).agg(push_rate=('push_rate', 'mean'))
+        push['date_label'] = format_axis_date(push['date'])
+        push['label'] = push['push_rate'].map(lambda x: '-' if pd.isna(x) else f"{x*100:.2f}%")
+        fig2 = px.line(push, x='date_label', y='push_rate', markers=True, text='label', title=f'{title} · 推审率', template='plotly_white')
+        fig2 = style_single_series_line(fig2, push['date_label'], yaxis_title='推审率', percent_axis=True)
+        st.plotly_chart(fig2, use_container_width=True, key=f'{key}_push')
+    with c2:
+        vio = part.groupby('date', as_index=False).agg(violation_rate=('violation_rate', 'mean'))
+        vio['date_label'] = format_axis_date(vio['date'])
+        vio['label'] = vio['violation_rate'].map(lambda x: '-' if pd.isna(x) else f"{x*100:.2f}%")
+        fig3 = px.line(vio, x='date_label', y='violation_rate', markers=True, text='label', title=f'{title} · 违规率', template='plotly_white')
+        fig3 = style_single_series_line(fig3, vio['date_label'], yaxis_title='违规率', percent_axis=True)
+        st.plotly_chart(fig3, use_container_width=True, key=f'{key}_vio')
+
 
 latest = load_csv("biz_summary_latest.csv")
 trend = load_csv("biz_trend_30d.csv")
