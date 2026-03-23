@@ -242,7 +242,6 @@ group_options = {
 }
 
 if page == "总览趋势":
-    st.subheader("总览趋势")
     c1, c2 = st.columns([1.7, 1.1])
     with c1:
         trend_df = trend_f.groupby("date", as_index=False).agg(total_count=("total_count", "sum"))
