@@ -65,14 +65,14 @@ def add_line_labels(fig, text_col: str):
     return fig
 
 
-def style_single_series_area(fig, date_vals, yaxis_title=None, percent_axis=False):
-    fig.update_traces(fill="tozeroy", line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), textposition="top center", cliponaxis=False, textfont=dict(size=10))
+def style_single_series_line(fig, date_vals, yaxis_title=None, percent_axis=False):
+    fig.update_traces(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), textposition="top center", cliponaxis=False, textfont=dict(size=10), mode="lines+markers+text")
     fig.update_layout(
-        height=360,
-        margin=dict(l=20, r=20, t=90, b=40),
+        height=350,
+        margin=dict(l=20, r=20, t=72, b=36),
         xaxis_title=None,
         yaxis_title=yaxis_title,
-        title=dict(y=0.98),
+        title=dict(y=0.95),
         xaxis=dict(tickmode="array", tickvals=date_vals, automargin=True, tickangle=0),
         showlegend=False,
     )
@@ -176,8 +176,8 @@ with trend_tab:
         trend_df = filtered.groupby("date", as_index=False).agg(total_count=("total_count", "sum"))
         trend_df["date_label"] = format_axis_date(trend_df["date"])
         trend_df["label"] = trend_df["total_count"].map(compact_num_label)
-        fig = px.area(trend_df, x="date_label", y="total_count", text="label", title="总进审量趋势", template="plotly_white")
-        fig = style_single_series_area(fig, trend_df['date_label'], yaxis_title="进审量", percent_axis=False)
+        fig = px.line(trend_df, x="date_label", y="total_count", markers=True, text="label", title="总进审量趋势", template="plotly_white")
+        fig = style_single_series_line(fig, trend_df['date_label'], yaxis_title="进审量", percent_axis=False)
         st.plotly_chart(fig, use_container_width=True)
     with c2:
         status_df = snap_filtered.groupby("status", as_index=False).size().sort_values("status")
@@ -190,15 +190,15 @@ with trend_tab:
         push_df = filtered.groupby("date", as_index=False).agg(push_rate=("push_rate", "mean"))
         push_df["date_label"] = format_axis_date(push_df["date"])
         push_df["label"] = push_df["push_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
-        fig = px.area(push_df, x="date_label", y="push_rate", text="label", title="平均推审率趋势", template="plotly_white")
-        fig = style_single_series_area(fig, push_df['date_label'], yaxis_title="推审率", percent_axis=True)
+        fig = px.line(push_df, x="date_label", y="push_rate", markers=True, text="label", title="平均推审率趋势", template="plotly_white")
+        fig = style_single_series_line(fig, push_df['date_label'], yaxis_title="推审率", percent_axis=True)
         st.plotly_chart(fig, use_container_width=True)
     with c4:
         vio_df = filtered.groupby("date", as_index=False).agg(violation_rate=("violation_rate", "mean"))
         vio_df["date_label"] = format_axis_date(vio_df["date"])
         vio_df["label"] = vio_df["violation_rate"].map(lambda x: "-" if pd.isna(x) else f"{x*100:.2f}%")
-        fig = px.area(vio_df, x="date_label", y="violation_rate", text="label", title="平均违规率趋势", template="plotly_white")
-        fig = style_single_series_area(fig, vio_df['date_label'], yaxis_title="违规率", percent_axis=True)
+        fig = px.line(vio_df, x="date_label", y="violation_rate", markers=True, text="label", title="平均违规率趋势", template="plotly_white")
+        fig = style_single_series_line(fig, vio_df['date_label'], yaxis_title="违规率", percent_axis=True)
         st.plotly_chart(fig, use_container_width=True)
 
 with biz_tab:
@@ -220,24 +220,24 @@ with biz_tab:
             focus_df["count_label"] = focus_df["total_count"].map(compact_num_label)
             focus_df["avg_label"] = focus_df["total_7d_avg"].map(compact_num_label)
             fig = px.line(focus_df, x="date_label", y=["total_count", "total_7d_avg"], markers=True, title=f"{focus_biz} · 进审量 vs 7日均量", template="plotly_white")
-            fig.update_layout(height=390, margin=dict(l=20, r=20, t=90, b=40), legend_title="指标", xaxis_title=None, yaxis_title="进审量", title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), legend_title="指标", xaxis_title=None, yaxis_title="进审量", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
             fig.data[0].name = "进审量"
             fig.data[1].name = "7日均量"
             fig.data[0].text = focus_df["count_label"]
             fig.data[1].text = focus_df["avg_label"]
-            fig.data[0].update(fill="tozeroy", line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            fig.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
             fig.data[1].update(line=dict(width=2.2, color="#F59E0B", dash="dot"), marker=dict(size=6, color="#F59E0B"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
             st.plotly_chart(fig, use_container_width=True)
 
             focus_df["push_label"] = focus_df["push_rate"].map(pct_text)
             focus_df["vio_label"] = focus_df["violation_rate"].map(pct_text)
             fig2 = px.line(focus_df, x="date_label", y=["push_rate", "violation_rate"], markers=True, title=f"{focus_biz} · 推审率 / 违规率趋势", template="plotly_white")
-            fig2.update_layout(height=390, margin=dict(l=20, r=20, t=90, b=40), yaxis_tickformat='.2%', xaxis_title=None, yaxis_title="比率", title=dict(y=0.98), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
+            fig2.update_layout(height=370, margin=dict(l=20, r=20, t=72, b=36), yaxis_tickformat='.2%', xaxis_title=None, yaxis_title="比率", title=dict(y=0.95), xaxis=dict(tickmode='array', tickvals=focus_df['date_label'], automargin=True))
             fig2.data[0].name = "推审率"
             fig2.data[1].name = "违规率"
             fig2.data[0].text = focus_df["push_label"]
             fig2.data[1].text = focus_df["vio_label"]
-            fig2.data[0].update(fill="tozeroy", line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
+            fig2.data[0].update(line=dict(width=2.2, color="#5B6CFF"), marker=dict(size=6, color="#5B6CFF"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
             fig2.data[1].update(line=dict(width=2.2, color="#EF4444"), marker=dict(size=6, color="#EF4444"), cliponaxis=False, textposition="top center", textfont=dict(size=10), mode="lines+markers+text")
             st.plotly_chart(fig2, use_container_width=True)
 
