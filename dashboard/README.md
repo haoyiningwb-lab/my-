@@ -38,8 +38,22 @@ python3 export_bi_data.py
 
 这些文件可以直接拿去接 Metabase / Superset / Retool / Power BI / Tableau。
 
+## DuckDB 导出
+```bash
+cd /Users/haoyining/.openclaw/workspace/dashboard
+python3 export_duckdb.py
+```
+
+导出后会生成：
+- `exports/dashboard.duckdb`
+
+## 文档
+- `BI-DATA-MODEL.md`：通用数据模型说明
+- `BI-TOOLS-SUGGESTION.md`：工具选择建议
+- `METABASE-SETUP.md`：Metabase 接入建议
+
 ## 下一步建议
-- 把清洗结果缓存到 DuckDB / SQLite
 - 增加规则配置页
 - 增加日报回溯页
 - 增加更精致的主题样式和品牌化配色
+- 如果需要，我可以继续补 PostgreSQL / SQLite 版本导出
