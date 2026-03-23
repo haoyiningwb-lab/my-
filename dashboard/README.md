@@ -23,6 +23,21 @@ cd /Users/haoyining/.openclaw/workspace/dashboard
 streamlit run app.py
 ```
 
+## BI 通用数据导出
+```bash
+cd /Users/haoyining/.openclaw/workspace/dashboard
+python3 export_bi_data.py
+```
+
+导出后会生成：
+- `exports/fact_daily_metrics.csv`
+- `exports/dim_business.csv`
+- `exports/biz_summary_latest.csv`
+- `exports/fact_alerts.csv`
+- `exports/biz_trend_30d.csv`
+
+这些文件可以直接拿去接 Metabase / Superset / Retool / Power BI / Tableau。
+
 ## 下一步建议
 - 把清洗结果缓存到 DuckDB / SQLite
 - 增加规则配置页
