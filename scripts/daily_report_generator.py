@@ -176,6 +176,16 @@ def build_report(target: date = DEFAULT_TARGET) -> ReportData:
     return ReportData(target=target, red=red, warn=warn, insight=insight, rows=rows)
 
 
+def render_report_table_values(report: ReportData) -> list[list[str]]:
+    return [
+        ["业务", "进审量", "推审率", "大盘违规率", "状态"],
+        *[
+            [row.biz, intfmt(row.total), pct(row.push_rate), pct(row.violation_rate), row.status]
+            for row in report.rows
+        ],
+    ]
+
+
 def render_report_md(report: ReportData) -> str:
     status_counts = {"🔴": 0, "⚠️": 0, "⚡": 0, "✓": 0}
     for row in report.rows:
@@ -193,7 +203,7 @@ def render_report_md(report: ReportData) -> str:
     lines.extend([f"- {x}" for x in report.warn])
     lines.extend(["", "趋势洞察"])
     lines.extend([f"- {x}" for x in report.insight])
-    lines.extend(["", "业务速览"])
+    lines.extend(["", "业务速览（表格字段顺序：业务 / 进审量 / 推审率 / 大盘违规率 / 状态）"])
     for row in report.rows:
         lines.append(
             f"- {row.biz} | 进审量 {intfmt(row.total)} | 推审率 {pct(row.push_rate)} | 大盘违规率 {pct(row.violation_rate)} | 状态 {row.status}"
