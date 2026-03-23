@@ -234,7 +234,7 @@ k2.metric("平均推审率", pct_text(latest_f['push_rate'].mean()))
 k3.metric("平均违规率", pct_text(latest_f['violation_rate'].mean()))
 k4.metric("红色业务", str(int((latest_f['status'] == '🔴').sum())))
 
-page = st.radio("页面切换", ["总览趋势", "分组趋势", "业务钻取", "异常排查"], horizontal=True)
+page = st.radio("", ["总览趋势", "分组趋势", "业务钻取", "异常排查"], horizontal=True, label_visibility="collapsed")
 
 group_options = {
     "社区业务": ["增量昵称简介", "TapTap-头像-用户资料图片", "融媒体短文本", "TapTap-融媒体长文本"],
@@ -275,7 +275,6 @@ if page == "总览趋势":
         st.plotly_chart(fig, use_container_width=True)
 
 elif page == "分组趋势":
-    st.subheader("分组趋势")
     selected_group_trend = st.selectbox("选择分组板块", list(group_options.keys()), index=0)
     render_group_trend(trend_f, group_options[selected_group_trend], f"{selected_group_trend}趋势", "selected_group_trend")
 
