@@ -126,11 +126,13 @@ with st.sidebar:
     selected_biz = st.multiselect("选择业务", biz_names, default=biz_names if default_all_biz else biz_names[: min(5, len(biz_names))])
     if not selected_biz:
         selected_biz = biz_names
+    days = st.select_slider("观察窗口", options=[7, 15, 30, 60], value=7)
     status_filter = st.segmented_control("状态筛选", options=["全部", "异常", "正常"], default="全部", selection_mode="single")
     st.markdown('</div>', unsafe_allow_html=True)
 
 latest_f = latest[latest["biz_group"].isin(selected_groups) & latest["biz_name"].isin(selected_biz)].copy()
 trend_f = trend[trend["biz_group"].isin(selected_groups) & trend["biz_name"].isin(selected_biz)].copy()
+trend_f = trend_f[trend_f["date"] >= (pd.Timestamp(global_latest) - pd.Timedelta(days=days - 1))]
 if status_filter == "异常":
     latest_f = latest_f[latest_f["status"].isin(["🔴", "⚠️", "⚡"])]
 elif status_filter == "正常":
