@@ -1,0 +1,16 @@
+business_name,business_group,default_status,latest_source_file
+steam头像封面,Steam,✓,表2_steam头像封面.xlsx
+steam成就标题简介,Steam,🔴,表1_steam成就标题简介.xlsx
+steam昵称简介,Steam,⚠️,表1_steam昵称简介.xlsx
+TapTap-头像-用户资料图片,TapTap,✓,表2_TapTap-头像-用户资料图片.xlsx
+TapTap-融媒体长文本,TapTap,⚠️,表2_TapTap-融媒体长文本.xlsx
+国内小镇书籍,国内小镇,✓,表2_国内小镇书籍.xlsx
+国内小镇照片,国内小镇,⚡,表2_国内小镇照片.xlsx
+国内小镇舆情,国内小镇,⚠️,表2_国内小镇舆情.xlsx
+战绩头像,战绩,✓,表2_战绩头像.xlsx
+战绩昵称,战绩,🔴,表1_战绩昵称.xlsx
+增量昵称简介,昵称资料,⚡,表1_增量昵称简介.xlsx
+海外小镇书籍,海外小镇,✓,表2_海外小镇书籍.xlsx
+海外小镇照片,海外小镇,✓,表2_海外小镇照片.xlsx
+海外小镇舆情,海外小镇,⚠️,表2_海外小镇舆情.xlsx
+融媒体短文本,融媒体,⚠️,表1_融媒体短文本.xlsx
