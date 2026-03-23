@@ -37,3 +37,5 @@
 - Every day at 10:00: sync the data dashboard.
 - Every day at 18:00: sync employees' training status and send a team progress report.
 - Every day, do a brief self-check covering persona, language, team structure, tasks, scheduled tasks, and desktop backups.
+- When important content changes, or when the user explicitly asks to add a backup, proactively refresh the Desktop backup files.
+- Preferred backup method: run `python3 scripts/update_desktop_backup.py` from the workspace to refresh both fixed Desktop backup files and archive the previous latest copies.
