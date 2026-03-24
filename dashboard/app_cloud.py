@@ -39,11 +39,17 @@ st.markdown(
 )
 
 @st.cache_data(ttl=600)
-def load_csv(name: str) -> pd.DataFrame:
+def load_csv(name: str, mtime: float | None = None) -> pd.DataFrame:
     path = EXPORT_DIR / name
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path)
+
+
+def load_csv_fresh(name: str) -> pd.DataFrame:
+    path = EXPORT_DIR / name
+    mtime = path.stat().st_mtime if path.exists() else None
+    return load_csv(name, mtime)
 
 
 def pct_text(v):
@@ -156,9 +162,9 @@ def render_group_trend(source_df: pd.DataFrame, biz_names: list[str], title: str
         st.plotly_chart(fig3, use_container_width=True, key=f'{key}_vio')
 
 
-latest = load_csv("biz_summary_latest.csv")
-trend = load_csv("biz_trend_30d.csv")
-alerts = load_csv("fact_alerts.csv")
+latest = load_csv_fresh("biz_summary_latest.csv")
+trend = load_csv_fresh("biz_trend_30d.csv")
+alerts = load_csv_fresh("fact_alerts.csv")
 
 st.markdown('<div class="main-title">📊 业务数据看板</div>', unsafe_allow_html=True)
 
@@ -277,7 +283,6 @@ elif page == "分组趋势":
     render_group_trend(trend_f, group_options[selected_group_trend], f"{selected_group_trend}趋势", "selected_group_trend")
 
 elif page == "业务钻取":
-    st.subheader("业务钻取")
     focus_candidates = sorted(latest_f["biz_name"].unique().tolist()) if not latest_f.empty else []
     if not focus_candidates:
         st.warning("当前筛选条件下暂无业务数据。")
@@ -329,7 +334,6 @@ elif page == "业务钻取":
             st.dataframe(show_cols.rename(columns={"date": "日期", "total_count": "进审量", "total_7d_avg": "7日均量", "push_rate": "推审率", "violation_rate": "违规率", "review_count": "人审量", "reject_count": "驳回量", "error_value": "误差值", "source_file": "来源文件"}), use_container_width=True, hide_index=True)
 
 else:
-    st.subheader("异常排查")
     alerts_f = alerts[alerts["biz_group"].isin(selected_groups) & alerts["biz_name"].isin(selected_biz)].copy() if not alerts.empty else pd.DataFrame()
     st.markdown("#### 风险预警")
     warnings = build_warning_texts(latest_f)
