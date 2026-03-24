@@ -39,11 +39,17 @@ st.markdown(
 )
 
 @st.cache_data(ttl=600)
-def load_csv(name: str) -> pd.DataFrame:
+def load_csv(name: str, mtime: float | None = None) -> pd.DataFrame:
     path = EXPORT_DIR / name
     if not path.exists():
         return pd.DataFrame()
     return pd.read_csv(path)
+
+
+def load_csv_fresh(name: str) -> pd.DataFrame:
+    path = EXPORT_DIR / name
+    mtime = path.stat().st_mtime if path.exists() else None
+    return load_csv(name, mtime)
 
 
 def pct_text(v):
@@ -156,9 +162,9 @@ def render_group_trend(source_df: pd.DataFrame, biz_names: list[str], title: str
         st.plotly_chart(fig3, use_container_width=True, key=f'{key}_vio')
 
 
-latest = load_csv("biz_summary_latest.csv")
-trend = load_csv("biz_trend_30d.csv")
-alerts = load_csv("fact_alerts.csv")
+latest = load_csv_fresh("biz_summary_latest.csv")
+trend = load_csv_fresh("biz_trend_30d.csv")
+alerts = load_csv_fresh("fact_alerts.csv")
 
 st.markdown('<div class="main-title">📊 业务数据看板</div>', unsafe_allow_html=True)
 
