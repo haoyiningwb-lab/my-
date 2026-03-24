@@ -40,3 +40,4 @@
 - When important content changes, or when the user explicitly asks to add a backup, proactively refresh the Desktop backup files.
 - Preferred backup method: run `python3 scripts/update_desktop_backup.py` from the workspace to refresh both fixed Desktop backup files and archive the previous latest copies.
 - 日报排版硬性规则：最新日期必须放在最上面；“业务速览”必须使用表格呈现。
+- 日报/看板计算口径已固化到 `team/REPORT-CALCULATION-RULES.md`，后续统一按该文件执行；若对表头含义有疑问，先问用户，不允许猜。
