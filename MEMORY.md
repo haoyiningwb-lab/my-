@@ -41,3 +41,4 @@
 - Preferred backup method: run `python3 scripts/update_desktop_backup.py` from the workspace to refresh both fixed Desktop backup files and archive the previous latest copies.
 - 日报排版硬性规则：最新日期必须放在最上面；“业务速览”必须使用表格呈现。
 - 日报/看板计算口径已固化到 `team/REPORT-CALCULATION-RULES.md`，后续统一按该文件执行；若对表头含义有疑问，先问用户，不允许猜。
+- 当前线上看板地址 `sbpy8oyczwu4zuexrpfav5.streamlit.app` 实际绑定的是仓库 `my-` 的 `new-看板` 分支，不是 `main`；以后更新线上看板时，需要同步检查并更新 `new-看板`，避免只推 `main` 导致线上数据不刷新。
