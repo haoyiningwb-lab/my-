@@ -35,6 +35,7 @@
 - For online dashboard sync, stability comes first; do not break the current stable online version.
 - Every day at 09:00: automatically generate the daily report.
 - Every day at 10:00: sync the data dashboard.
+- 默认串行动作：更新完业务日报后，直接继续更新数据看板，这两个动作连起来执行，不再拆开等待。
 - Every day at 18:00: sync employees' training status and send a team progress report.
 - Every day, do a brief self-check covering persona, language, team structure, tasks, scheduled tasks, and desktop backups.
 - When important content changes, or when the user explicitly asks to add a backup, proactively refresh the Desktop backup files.
