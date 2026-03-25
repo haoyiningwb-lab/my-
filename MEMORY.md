@@ -38,6 +38,7 @@
 - 默认串行动作：更新完业务日报后，直接继续更新数据看板，这两个动作连起来执行，不再拆开等待。
 - 从 2026-03-26 起，文档更新与数据看板更新按同一轮流程串行执行；当天如用户另有说明，则按当日说明处理。
 - 业务周报禁止覆盖历史文档；后续必须保留历史周报数据，采用新增/另存/追加的方式更新。
+- 任务执行若出现异常，尤其是定时全自动项目（如定时同步、自动更新、定时生成），必须第一时间主动反馈，不得等用户追问后才说明。
 - Every day at 18:00: sync employees' training status and send a team progress report.
 - Every day, do a brief self-check covering persona, language, team structure, tasks, scheduled tasks, and desktop backups.
 - When important content changes, or when the user explicitly asks to add a backup, proactively refresh the Desktop backup files.
