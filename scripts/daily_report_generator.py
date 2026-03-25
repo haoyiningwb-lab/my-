@@ -119,13 +119,13 @@ def build_report(target: date = DEFAULT_TARGET) -> ReportData:
         elif biz == "海外小镇舆情":
             warn.append(f"海外小镇舆情：推审率 {pct(push)}，大盘违规率 {pct(vio)}，高比例送审表现需继续核查。")
         elif biz in {"增量昵称简介", "国内小镇照片"}:
-            if prev is not None and prev.get("total_count") not in (None, 0):
-                growth = (float(cur["total_count"]) - float(prev["total_count"])) / float(prev["total_count"])
+            tail = "需关注量级变化后的风险暴露。" if biz == "增量昵称简介" else "建议关注召回质量与承接压力。"
+            prev_total = None if prev is None else prev.get("total_count")
+            if not is_blank(total) and not is_blank(prev_total) and prev_total not in (0, 0.0):
+                growth = (float(cur["total_count"]) - float(prev_total)) / float(prev_total)
                 verb = "上升" if growth >= 0 else "下降"
-                tail = "需关注量级变化后的风险暴露。" if biz == "增量昵称简介" else "建议关注召回质量与承接压力。"
                 insight.append(f"{biz}：昨日进审量 {intfmt(total)}，较前一日{verb} {abs(growth) * 100:.1f}%，{tail}")
-            else:
-                tail = "需关注量级变化后的风险暴露。" if biz == "增量昵称简介" else "建议关注召回质量与承接压力。"
+            elif not is_blank(total):
                 insight.append(f"{biz}：昨日进审量 {intfmt(total)}，{tail}")
 
     rows.sort(key=lambda x: (x.status, x.biz))
