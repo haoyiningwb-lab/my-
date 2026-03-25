@@ -36,6 +36,7 @@
 - Every day at 09:00: automatically generate the daily report.
 - Every day at 10:00: sync the data dashboard.
 - 默认串行动作：更新完业务日报后，直接继续更新数据看板，这两个动作连起来执行，不再拆开等待。
+- 业务周报禁止覆盖历史文档；后续必须保留历史周报数据，采用新增/另存/追加的方式更新。
 - Every day at 18:00: sync employees' training status and send a team progress report.
 - Every day, do a brief self-check covering persona, language, team structure, tasks, scheduled tasks, and desktop backups.
 - When important content changes, or when the user explicitly asks to add a backup, proactively refresh the Desktop backup files.
