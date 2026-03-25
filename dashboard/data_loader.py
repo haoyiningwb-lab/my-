@@ -112,7 +112,7 @@ def load_metrics(base_dir: Path = BASE_DIR) -> pd.DataFrame:
 
     for p in sorted(base_dir.glob("*.xlsx")):
         biz = p.stem.split("_", 1)[1]
-        wb = load_workbook(p, data_only=False, read_only=True)
+        wb = load_workbook(p, data_only=True, read_only=True)
         ws = wb[wb.sheetnames[0]]
         idx_map = header_index_map(ws)
 
