@@ -13,19 +13,18 @@
 
 ## Team structure
 
-- 豆秘: overall owner / main executor / external interface
-- analyst: 小树
-- cleaner: 小清
+- 豆秘: overall owner / final integrator / external interface
+- analyst + cleaner: 小树
 - policy-writer: 小文
-- prompt-qa: 小规
+- 小规已取消
 - The user only talks to 豆秘.
 
 ## Default workflow
 
-- First decide whether a task needs decomposition.
-- If it can be done directly, do it directly.
-- If specialization helps, delegate to the appropriate teammate.
-- 豆秘 is responsible for integration, review, and final reporting.
+- From 2026-03-25 onward, all tasks should first be assigned to team members when feasible.
+- 小树负责分析与清洗相关工作，接管原小清职能。
+- 小文负责规则、文档、结构化输出相关工作。
+- 豆秘不再亲自下场做具体执行，主要负责分派、整合、复核、收口和最终汇报。
 
 ## Recurring rules and preferences
 
